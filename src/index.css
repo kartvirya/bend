@@ -1,0 +1,124 @@
+/* Import Roboto from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.top-sportsman-text {
+  font-size: 24px;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: white;
+  background: linear-gradient(90deg, #ff0000, #ff8c00);
+  padding: 10px 20px;
+  border-radius: 50px;
+  box-shadow: 0px 0px 10px rgba(255, 215, 0, 0.7);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.floating-submenu {
+  position: absolute;
+  left: 80px; /* Adjust for proper positioning */
+  background: rgba(30, 30, 30, 0.9);
+  padding: 10px;
+  border-radius: 5px;
+  display: block;
+}
+
+.background-dark-blur {
+  background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+  backdrop-filter: blur(5px); /* Blur effect */
+}
+
+.sidebar-icon {
+  @apply flex items-center justify-center w-12 h-12 mt-2 mb-2 mx-auto shadow-lg 
+  bg-gray-800 text-red-500 hover:bg-custom-pink hover:text-white
+  rounded-3xl hover:rounded-xl transition-all duration-300 ease-linear cursor-pointer;
+}
+
+.sidebar-tooltip {
+  @apply absolute w-auto p-2 m-2 min-w-max left-14 rounded-md shadow-md
+  text-white bg-gray-900 text-xs font-bold transition-all duration-100 scale-0 origin-left;
+}
+
+.sidebar-icon:hover .sidebar-tooltip {
+  @apply scale-100;
+}
+
+.calendar-day {
+  @apply w-12 h-12 flex items-center justify-center rounded-full cursor-pointer;
+}
+
+.calendar-day-active {
+  @apply bg-red-500 text-white;
+}
+
+.calendar-day-selected {
+  @apply ring-2 ring-yellow-400 ring-offset-2 ring-offset-gray-800;
+}
+
+.calendar-day:hover {
+  @apply bg-gray-700;
+}
+
+.calendar-arrow {
+  @apply text-4xl text-red-500 cursor-pointer hover:text-red-400;
+}
+
+.search-bar {
+  @apply bg-gray-800 bg-opacity-70 text-white rounded-full px-4 py-2 w-full max-w-lg;
+}
+
+.results-table {
+  @apply w-full rounded-lg overflow-hidden;
+}
+
+.results-table th {
+  @apply bg-gray-800 text-left py-3 px-8 uppercase font-semibold text-sm;
+}
+
+.results-table td {
+  @apply border-t border-gray-700 px-8 py-3;
+}
+
+.results-table tr:hover {
+  @apply bg-gray-700 bg-opacity-50;
+}
+
+.driver-name {
+  @apply underline cursor-pointer hover:text-red-400;
+}
+
+/* Breakout styles */
+.breakout {
+  @apply bg-red-700 text-white;
+}
+
+.breakoutblue {
+  @apply bg-blue-700 text-white;
+}
+
+.winner {
+  @apply bg-green-600 text-white font-bold;
+}

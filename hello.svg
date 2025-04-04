@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!-- Background -->
+  <rect width="500" height="500" fill="#1E4D5A" />
+  
+  <!-- Lotus Flower -->
+  <!-- Outer Petals -->
+  <g id="outer-petals">
+    <!-- Petal 1 -->
+    <path d="M250 120 L290 60 Q320 80 300 120 Z" fill="#F9E8B0" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="5s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 2 -->
+    <path d="M250 120 L310 80 Q350 100 320 140 Z" fill="#F2D699" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="5.5s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 3 -->
+    <path d="M250 120 L340 110 Q370 140 330 170 Z" fill="#E8C485" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="6s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 4 -->
+    <path d="M250 120 L350 150 Q370 190 320 210 Z" fill="#F9E8B0" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="6.5s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 5 -->
+    <path d="M250 120 L340 200 Q350 240 300 240 Z" fill="#F2D699" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="7s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 6 -->
+    <path d="M250 120 L310 240 Q310 280 270 270 Z" fill="#E8C485" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="7.5s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 7 -->
+    <path d="M250 120 L240 260 Q230 300 200 270 Z" fill="#F9E8B0" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="8s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 8 -->
+    <path d="M250 120 L190 240 Q160 270 180 230 Z" fill="#F2D699" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="8.5s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 9 -->
+    <path d="M250 120 L150 200 Q120 220 160 180 Z" fill="#E8C485" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="9s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 10 -->
+    <path d="M250 120 L140 150 Q100 160 150 130 Z" fill="#F9E8B0" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="9.5s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 11 -->
+    <path d="M250 120 L160 100 Q120 80 170 80 Z" fill="#F2D699" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="10s" repeatCount="indefinite" />
+    </path>
+    <!-- Petal 12 -->
+    <path d="M250 120 L190 60 Q170 30 220 60 Z" fill="#E8C485" stroke="#634F2C" stroke-width="1">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="10.5s" repeatCount="indefinite" />
+    </path>
+  </g>
+
+  <!-- Inner Petals -->
+  <g id="inner-petals">
+    <!-- Petal patterns -->
+    <path d="M250 120 Q270 90 250 70 Q230 90 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q280 100 290 70 Q270 100 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q290 110 310 90 Q280 115 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q290 130 310 130 Q280 130 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q280 140 290 170 Q270 140 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q270 150 250 170 Q230 150 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q230 140 210 170 Q230 140 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q210 130 190 130 Q220 130 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q210 110 190 90 Q220 115 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+    <path d="M250 120 Q220 100 210 70 Q230 100 250 120" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+  </g>
+
+  <!-- Center -->
+  <circle cx="250" cy="120" r="20" fill="#2D7D9A" stroke="#18424D" stroke-width="1" />
+  <circle cx="250" cy="120" r="10" fill="#F9E8B0" stroke="#634F2C" stroke-width="0.5" />
+  <circle cx="250" cy="120" r="5" fill="#FFFFFF" />
+
+  <!-- Lines on petals -->
+  <g id="petal-lines" stroke="#634F2C" stroke-width="0.5" fill="none">
+    <!-- Outer petals lines -->
+    <path d="M250 120 L290 60 M270 90 L295 65" />
+    <path d="M250 120 L310 80 M280 100 L305 85" />
+    <path d="M250 120 L340 110 M290 115 L320 110" />
+    <path d="M250 120 L350 150 M290 130 L330 140" />
+    <path d="M250 120 L340 200 M280 150 L320 180" />
+    <path d="M250 120 L310 240 M270 170 L290 210" />
+    <path d="M250 120 L240 260 M245 170 L245 220" />
+    <path d="M250 120 L190 240 M230 170 L210 210" />
+    <path d="M250 120 L150 200 M220 150 L180 180" />
+    <path d="M250 120 L140 150 M210 130 L170 140" />
+    <path d="M250 120 L160 100 M210 110 L180 105" />
+    <path d="M250 120 L190 60 M230 90 L205 70" />
+  </g>
+
+  <!-- Text -->
+  <text x="250" y="350" font-family="Times New Roman, serif" font-size="60" fill="#F9E8B0" text-anchor="middle">DHARMA</text>
+  <text x="250" y="390" font-family="Arial, sans-serif" font-size="18" fill="#FFFFFF" text-anchor="middle">ENLIGHTENMENT • HARMONY • PEACE</text>
+
+  <!-- Subtle background texture -->
+  <rect width="500" height="500" fill="url(#texture)" fill-opacity="0.1" />
+  <defs>
+    <pattern id="texture" patternUnits="userSpaceOnUse" width="100" height="100">
+      <path d="M0 0 L100 100 M100 0 L0 100" stroke="#FFFFFF" stroke-width="0.5" stroke-opacity="0.2" />
+    </pattern>
+  </defs>
+</svg>

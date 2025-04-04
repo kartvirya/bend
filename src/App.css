@@ -1,0 +1,5 @@
+.background-dark-blur {
+  background-color: rgba(0, 0, 0, 0.985); /* Dark overlay */
+  backdrop-filter: blur(10px); /* Blur effect */
+  -webkit-backdrop-filter: blur(5px)
+}
