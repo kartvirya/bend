@@ -1,5 +1,238 @@
+/* Reset default styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Base styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #0e1425;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Window-specific styles */
+.sidebar-window {
+  width: 100%;
+  height: 100vh;
+  background-color: #0e1425;
+  color: white;
+}
+
+.content-window {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background-color: #0e1425;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background blur effect */
 .background-dark-blur {
-  background-color: rgba(0, 0, 0, 0.985); /* Dark overlay */
-  backdrop-filter: blur(10px); /* Blur effect */
-  -webkit-backdrop-filter: blur(5px)
+  background-color: rgba(0, 0, 0, 0.985);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* Loading indicator */
+.window-loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.2rem;
+  text-align: center;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.window-loading::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Component containers */
+.qualifying-container,
+.results-container,
+.pairing-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Calendar container */
+.calendar-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+}
+
+/* Table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+}
+
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+/* God Mode scaling */
+:root {
+  --god-mode-scale: 1;
+}
+
+[style*="--god-mode-scale"] table {
+  font-size: calc(var(--god-mode-scale) * 0.75rem) !important;
+}
+
+[style*="--god-mode-scale"] th,
+[style*="--god-mode-scale"] td {
+  padding: calc(var(--god-mode-scale) * 0.5rem) calc(var(--god-mode-scale) * 0.75rem) !important;
+}
+
+[style*="--god-mode-scale"] button,
+[style*="--god-mode-scale"] a {
+  font-size: calc(var(--god-mode-scale) * 0.875rem);
+}
+
+[style*="--god-mode-scale"] svg {
+  transform: scale(var(--god-mode-scale));
+  transform-origin: center;
+}
+
+[style*="--god-mode-scale"] td div,
+[style*="--god-mode-scale"] td span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[style*="--god-mode-scale"] h1 {
+  font-size: calc(var(--god-mode-scale) * 1.5rem) !important;
+}
+
+[style*="--god-mode-scale"] h2 {
+  font-size: calc(var(--god-mode-scale) * 1.25rem) !important;
+}
+
+[style*="--god-mode-scale"] h3 {
+  font-size: calc(var(--god-mode-scale) * 1.125rem) !important;
+}
+
+[style*="--god-mode-scale"] .rounded-full {
+  transform: scale(var(--god-mode-scale));
+  transform-origin: center;
+}
+
+[style*="--god-mode-scale='1.3'"] *,
+[style*="--god-mode-scale='1.5'"] * {
+  font-weight: 500 !important;
+}
+
+[style*="--god-mode-scale='1.3'"] .text-gray-300,
+[style*="--god-mode-scale='1.3'"] .text-gray-400,
+[style*="--god-mode-scale='1.5'"] .text-gray-300,
+[style*="--god-mode-scale='1.5'"] .text-gray-400 {
+  color: #FFF !important;
+}
+
+[style*="--god-mode-scale"] .custom-scrollbar::-webkit-scrollbar {
+  width: calc(var(--god-mode-scale) * 8px) !important;
+  height: calc(var(--god-mode-scale) * 8px) !important;
+}
+
+[style*="--god-mode-scale"] table {
+  min-width: calc(800px * var(--god-mode-scale)) !important;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Window state indicator */
+.window-type-indicator {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Add loading animation for content */
+.content-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(14, 20, 37, 0.9);
+  z-index: 50;
+}
+
+.content-loading::after {
+  content: '';
+  width: 50px;
+  height: 50px;
+  border: 5px solid #fff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
 }

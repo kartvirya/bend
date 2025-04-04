@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Clock, Wind, AlertCircle, Loader2, Flag, Car, Activity, Search } from 'lucide-react';
+import { Trophy, Clock, Wind, AlertCircle, Loader2, Flag, Car, Activity, Search, RefreshCw } from 'lucide-react';
 import { ENDPOINTS, makeApiRequest } from '../utils/api';
 
-const Qualify = ({ selectedDate, category = 'SUPER_STREET' }) => {
+const Qualifying = ({ selectedDate, category = 'SUPER_STREET', godModeLevel = 0 }) => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -14,31 +14,61 @@ const Qualify = ({ selectedDate, category = 'SUPER_STREET' }) => {
     key: 'Position',
     direction: 'ascending'
   });
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async (showRefreshingState = false) => {
+    if (showRefreshingState) {
+      setIsRefreshing(true);
+    } else {
       setIsLoading(true);
-      try {
-        const data = await makeApiRequest(ENDPOINTS.GET_ALL_RESULTS.QUALIFYING, category, selectedDate);
-        
-        if (data && !data.error) {
-          setData(data.msg);
-          setShowData(true);
-        } else {
-          setError('Error fetching data: ' + (data?.error || 'Unknown error'));
-          setShowError(true);
-        }
-      } catch (err) {
-        console.error('Error during fetch:', err);
-        setError('Error fetching data. Please check your network or server.');
+    }
+    
+    try {
+      const data = await makeApiRequest(ENDPOINTS.GET_ALL_RESULTS.QUALIFYING, category, selectedDate);
+      
+      if (data && !data.error) {
+        setData(data.msg);
+        setShowData(true);
+        setShowError(false);
+        setLastRefresh(Date.now());
+      } else {
+        setError('Error fetching data: ' + (data?.error || 'Unknown error'));
         setShowError(true);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Error during fetch:', err);
+      setError('Error fetching data. Please check your network or server.');
+      setShowError(true);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
+  // Initial data loading
+  useEffect(() => {
     fetchData();
   }, [category, selectedDate]);
+  
+  // Set up auto-refresh polling every 2 minutes
+  useEffect(() => {
+    const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
+    
+    // Create polling interval for auto-refresh
+    const intervalId = setInterval(() => {
+      console.log('Auto-refreshing qualifying data...');
+      fetchData(true); // true means to show refreshing state instead of loading
+    }, AUTO_REFRESH_INTERVAL);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [category, selectedDate]); // Re-establish interval if category or selectedDate changes
+
+  // Manual refresh handler
+  const handleManualRefresh = () => {
+    fetchData(true);
+  };
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -78,6 +108,25 @@ const Qualify = ({ selectedDate, category = 'SUPER_STREET' }) => {
   const getRTColor = (rt) => {
     if (rt?.startsWith("-")) return "text-red-400";
     return "text-blue-400";
+  };
+
+  // Apply God Mode scaling to specific elements
+  const getGodModeClass = () => {
+    if (godModeLevel === 0) return '';
+    return `god-mode-level-${godModeLevel}`;
+  };
+  
+  // Get font size scaling based on God Mode level
+  const getGodModeFontSize = (baseSize) => {
+    if (godModeLevel === 0) return baseSize;
+    
+    const scaleFactor = {
+      1: 1.15,
+      2: 1.3,
+      3: 1.5
+    }[godModeLevel] || 1;
+    
+    return baseSize * scaleFactor;
   };
 
   const renderLoading = () => (
@@ -158,7 +207,7 @@ const Qualify = ({ selectedDate, category = 'SUPER_STREET' }) => {
             className="text-center p-8 bg-gray-800 rounded-xl shadow-lg max-w-md w-full mx-4"
           >
             <div className="flex justify-center mb-6">
-              <AlertCircle size={32} className="text-yellow-500" />
+              <AlertCircle size={getGodModeFontSize(32)} className="text-yellow-500" />
             </div>
             <h3 className="text-xl font-semibold mb-4">Round Data Not Available</h3>
             <p className="text-gray-400">The selected round data could not be loaded.</p>
@@ -198,22 +247,36 @@ const Qualify = ({ selectedDate, category = 'SUPER_STREET' }) => {
     });
 
     return (
-      <div className="h-[85vh] w-[90vw] max-w-[1600px] mx-auto bg-[#0e1425] text-white flex flex-col overflow-hidden rounded-lg">
+      <div className={`h-[85vh] w-[calc(100vw-105px)] mx-auto bg-[#0e1425] text-white flex flex-col overflow-hidden rounded-lg qualifying-container ${getGodModeClass()}`}>
         {/* Fixed top header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-800">
-          <div className="text-xl font-bold text-white">QUALIFYING</div>
+        <div className="flex justify-between items-center p-3 border-b border-gray-800">
+          <div className="text-lg font-bold text-white">QUALIFYING</div>
+          <div className="flex items-center">
+            {lastRefresh && (
+              <div className="text-xs text-gray-400 mr-2">
+                Last updated: {new Date(lastRefresh).toLocaleTimeString()}
+              </div>
+            )}
+            <button 
+              onClick={handleManualRefresh} 
+              disabled={isRefreshing || isLoading}
+              className={`p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
+            >
+              <RefreshCw size={getGodModeFontSize(16)} />
+            </button>
+          </div>
         </div>
         
         {/* Fixed rounds selector - horizontally scrollable */}
-        <div className="sticky top-0 z-10 bg-[#0e1425] border-b border-gray-800 p-2">
-          <div className="overflow-x-auto whitespace-nowrap pb-2 custom-scrollbar">
-            <div className="flex gap-2 px-2">
+        <div className="sticky top-0 z-10 bg-[#0e1425] border-b border-gray-800 p-1">
+          <div className="overflow-x-auto whitespace-nowrap pb-1 custom-scrollbar">
+            <div className="flex gap-1 px-1">
               {data.map((round) => (
                 <button
                   key={round.id}
-                  className={`px-4 py-2 rounded-md font-medium transition-all flex items-center gap-2 min-w-[100px] ${
+                  className={`px-2 py-2 rounded-md font-medium transition-all flex items-center justify-center gap-1 min-w-[80px] text-sm ${
                     activeRound === round.id
-                      ? 'bg-custom-pink text-white'
+                      ? 'bg-custom-pink text-white shadow-lg'
                       : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                   }`}
                   onClick={() => setActiveRound(round.id)}
@@ -225,161 +288,162 @@ const Qualify = ({ selectedDate, category = 'SUPER_STREET' }) => {
           </div>
         </div>
 
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-hidden relative shadow-md">
-          <div className="absolute inset-0 overflow-auto custom-scrollbar">
-            <table className="min-w-full border-collapse">
-              <thead className="bg-[#0e1425] sticky top-0 z-10">
-                <tr>
-                  {['POSITION', 'NAME', 'CAR NUMBER', 'CAR MAKE', 'CAR YEAR', 'RT', 'ET', 'SPEED'].map((header) => (
-                    <th 
-                      key={header}
-                      scope="col" 
-                      className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap border-b border-gray-800 cursor-pointer"
-                      onClick={() => requestSort(header === 'POSITION' ? 'Position' : header)}
-                    >
-                      {header}
-                      {sortConfig.key === (header === 'POSITION' ? 'Position' : header) && (
-                        <span className="ml-1">
-                          {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {sortedResults.map((result) => (
-                  <tr 
-                    key={result.id} 
-                    className="hover:bg-[#1a2235] transition-colors"
-                  >
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`flex items-center justify-center h-8 w-8 rounded-full text-sm font-medium ${getPositionColor(result.Position)}`}>
-                        {result.Position}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">{result.Name}</div>
-                      <div className={`text-xs ${getClassColor(result.Class)}`}>{result.Class}</div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {result.Car_Number}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {result.Car_Make}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {result.Car_Year}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Clock size={14} className="mr-1 text-blue-400" />
-                        <span className={`text-sm font-medium ${getRTColor(result.RT)}`}>{result.RT}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-yellow-400">{result.ET}</span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Wind size={14} className="mr-1 text-green-400" />
-                        <span className="text-sm font-medium text-green-400">{result.Speed}</span>
-                      </div>
-                    </td>
+        {/* Scrollable results */}
+        <div className="flex-1 overflow-auto custom-scrollbar qualifying-results relative">
+          {isLoading ? (
+            renderLoading()
+          ) : showError ? (
+            renderError()
+          ) : !showData ? (
+            renderNoData()
+          ) : (
+            <div className="absolute inset-0 overflow-auto custom-scrollbar">
+              <table className="min-w-full border-collapse">
+                <thead className="bg-[#0e1425] sticky top-0 z-10">
+                  <tr>
+                    {['POSITION', 'NAME', 'CAR NUMBER', 'CAR MAKE', 'CAR YEAR', 'RT', 'ET', 'SPEED'].map((header) => (
+                      <th 
+                        key={header}
+                        scope="col" 
+                        className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap border-b border-gray-800 cursor-pointer"
+                        onClick={() => requestSort(header === 'POSITION' ? 'Position' : header)}
+                      >
+                        {header}
+                        {sortConfig.key === (header === 'POSITION' ? 'Position' : header) && (
+                          <span className="ml-1">
+                            {sortConfig.direction === 'ascending' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {sortedResults.map((result) => (
+                    <tr 
+                      key={result.id} 
+                      className="hover:bg-[#1a2235] transition-colors"
+                    >
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className={`flex items-center justify-center h-8 w-8 rounded-full text-sm font-medium ${getPositionColor(result.Position)}`}>
+                          {result.Position}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">{result.Name}</div>
+                        <div className={`text-xs ${getClassColor(result.Class)}`}>{result.Class}</div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {result.Car_Number}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {result.Car_Make}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {result.Car_Year}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Clock size={14} className="mr-1 text-blue-400" />
+                          <span className={`text-sm font-medium ${getRTColor(result.RT)}`}>{result.RT}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-yellow-400">{result.ET}</span>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Wind size={14} className="mr-1 text-green-400" />
+                          <span className="text-sm font-medium text-green-400">{result.Speed}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  if (isLoading) return renderLoading();
-  if (showError) return renderError();
-  if (!showData) return renderNoData();
   return (
     <>
       {renderContent()}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 10px !important;
-          height: 10px !important;
-          display: block !important;
+          height: 6px;
+          width: 6px;
         }
-        
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: #1a2235;
-          border-radius: 0;
-          display: block !important;
+          background: #1a2035;
         }
-        
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #4b5563;
-          border-radius: 0;
-          display: block !important;
-          border: 1px solid #1a2235;
+          background: #303a58;
+          border-radius: 3px;
         }
-        
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #6b7280;
+          background: #3f4d75;
+        }
+        .qualifying-container {
+          min-width: 300px;
+        }
+        .qualifying-results {
+          min-width: 100%;
+          overflow-x: auto;
+        }
+        .qualifying-results table {
+          min-width: 800px;
+          width: 100%;
+        }
+        @media (max-width: 640px) {
+          .qualifying-container {
+            width: calc(100vw - 62px);
+          }
         }
         
-        .custom-scrollbar::-webkit-scrollbar-corner {
-          background: #1a2235;
+        /* Custom scaling for God Mode */
+        .god-mode-level-1 table {
+          font-size: 0.85rem;
         }
         
-        .custom-scrollbar {
-          scrollbar-width: auto;
-          scrollbar-color: #4b5563 #1a2235;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        /* Ensure scrollbars are visible at all times */
-        .custom-scrollbar {
-          overflow: scroll !important;
-          -ms-overflow-style: scrollbar !important;
+        .god-mode-level-2 table {
+          font-size: 1rem;
         }
         
-        /* Mobile devices */
-        @media (max-width: 768px) {
-          .custom-scrollbar::-webkit-scrollbar {
-            -webkit-appearance: none !important;
-            width: 10px !important;
-            height: 10px !important;
-            display: block !important;
-          }
-          
-          /* iOS devices */
-          @supports (-webkit-touch-callout: none) {
-            .custom-scrollbar {
-              -webkit-overflow-scrolling: touch;
-              overflow: scroll !important;
-            }
-          }
-
-          .mobile-hidden {
-            display: none;
-          }
-
-          table {
-            font-size: 12px;
-          }
-
-          th, td {
-            padding: 8px;
-          }
+        .god-mode-level-3 table {
+          font-size: 1.2rem;
         }
-
-        table {
-          min-width: 1200px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        
+        /* Increase cell padding in God Mode */
+        .god-mode-level-1 th, .god-mode-level-1 td {
+          padding: 0.6rem 0.8rem !important;
+        }
+        
+        .god-mode-level-2 th, .god-mode-level-2 td {
+          padding: 0.7rem 0.9rem !important;
+        }
+        
+        .god-mode-level-3 th, .god-mode-level-3 td {
+          padding: 0.8rem 1rem !important;
+        }
+        
+        /* Ensure icon scaling works properly */
+        .god-mode-level-1 svg {
+          transform: scale(1.15);
+        }
+        
+        .god-mode-level-2 svg {
+          transform: scale(1.3);
+        }
+        
+        .god-mode-level-3 svg {
+          transform: scale(1.5);
         }
       `}</style>
     </>
   );
 };
 
-export default Qualify;
+export default Qualifying;

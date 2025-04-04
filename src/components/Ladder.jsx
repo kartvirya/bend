@@ -133,8 +133,12 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
   // Ensure we correctly identify when a round is the final round
   const getFinalRoundText = (roundIndex, totalRounds) => {
     if (roundIndex === totalRounds - 1) {
-      // Only show "Winner" if there's more than one round
-      return totalRounds > 1 ? "Winner" : "Round 1";
+      // Only show "Winner" if the round has exactly one match (one winner)
+      if (rounds[roundIndex].length === 1) {
+        return "Winner";
+      } else {
+        return `Round ${roundIndex + 1}`;
+      }
     }
     return `Round ${roundIndex + 1}`;
   };
@@ -242,47 +246,74 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
   };
 
   const ensureConsistentVerticalAlignment = (roundIndex, matchIndex, totalMatches) => {
+    // Safety check for invalid inputs
+    if (roundIndex < 0 || !rounds[roundIndex] || matchIndex < 0 || matchIndex >= totalMatches) {
+      return 0;
+    }
+
     if (roundIndex === 0) {
       // First round positioning
       return getMatchOffset(roundIndex, matchIndex, totalMatches);
     } else {
       // For all subsequent rounds, position based on the connected matches from previous round
-      const matchesPerRound = Math.pow(2, rounds.length - roundIndex - 1);
       const previousRoundMatchIndex = matchIndex * 2;
       
+      // Safety check: Make sure previous round exists
+      if (!rounds[roundIndex - 1]) {
+        return getMatchOffset(roundIndex, matchIndex, totalMatches);
+      }
+      
+      // Check if the current round has the same number of matches as the previous round
+      const isSameNumberOfMatches = rounds[roundIndex].length === rounds[roundIndex - 1].length;
+      
+      // Special case: If rounds have the same number of matches, align them directly
+      if (isSameNumberOfMatches) {
+        return getMatchOffset(0, matchIndex, totalMatches);
+      }
+      
+      // Check if the current round has half the matches of the previous round
+      const isPreviousRoundHalved = rounds[roundIndex].length <= Math.ceil(rounds[roundIndex - 1].length / 2);
+      
       // If we're at the last round before the winner, return the center position
-      if (roundIndex === rounds.length - 2 && rounds.length > 1) {
-        const firstMatchPos = ensureConsistentVerticalAlignment(roundIndex - 1, 0, rounds[roundIndex - 1].length);
-        
-        // If there's only one match in the previous round, center with it
-        if (rounds[roundIndex - 1].length === 1) {
-          return firstMatchPos;
+      if (roundIndex === rounds.length - 2 && rounds.length > 1 && rounds[roundIndex + 1] && rounds[roundIndex + 1].length === 1) {
+        // Safety check
+        if (rounds[roundIndex - 1] && rounds[roundIndex - 1].length > 0) {
+          const firstMatchPos = ensureConsistentVerticalAlignment(roundIndex - 1, 0, rounds[roundIndex - 1].length);
+          
+          // If there's only one match in the previous round, center with it
+          if (rounds[roundIndex - 1].length === 1) {
+            return firstMatchPos;
+          }
+          
+          // For the last match in previous round
+          const lastMatchPos = ensureConsistentVerticalAlignment(
+            roundIndex - 1, 
+            rounds[roundIndex - 1].length - 1, 
+            rounds[roundIndex - 1].length
+          );
+          
+          // Return the middle point between first and last match
+          return (firstMatchPos + lastMatchPos) / 2;
         }
-        
-        // For the last match in previous round
-        const lastMatchPos = ensureConsistentVerticalAlignment(
-          roundIndex - 1, 
-          rounds[roundIndex - 1].length - 1, 
-          rounds[roundIndex - 1].length
-        );
-        
-        // Return the middle point between first and last match
-        return (firstMatchPos + lastMatchPos) / 2;
       }
       
       // For the winner round
       if (roundIndex === rounds.length - 1 && rounds.length > 1) {
-        // Get the position of the finals match
-        const finalsPosition = ensureConsistentVerticalAlignment(
-          roundIndex - 1, 
-          0, 
-          rounds[roundIndex - 1].length
-        );
-        return finalsPosition;
+        // Safety check to ensure previous round exists
+        if (rounds[roundIndex - 1] && rounds[roundIndex - 1].length > 0) {
+          // Get the position of the finals match
+          const finalsPosition = ensureConsistentVerticalAlignment(
+            roundIndex - 1, 
+            0, 
+            rounds[roundIndex - 1].length
+          );
+          return finalsPosition;
+        }
+        return getMatchOffset(roundIndex, matchIndex, totalMatches);
       }
       
-      // For other rounds, average the positions of the two connected matches in previous round
-      if (previousRoundMatchIndex < rounds[roundIndex - 1].length) {
+      // For other rounds, if the previous round is halved, average the positions of connected matches
+      if (isPreviousRoundHalved && previousRoundMatchIndex < rounds[roundIndex - 1].length) {
         const position1 = ensureConsistentVerticalAlignment(
           roundIndex - 1, 
           previousRoundMatchIndex, 
@@ -310,24 +341,38 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
 
   // Update the connector height calculation for proper line connections
   const getConnectorHeight = (roundIndex, matchIndex) => {
-    // Make sure we have the next round
-    if (roundIndex < rounds.length - 1) {
-      // If we're connecting adjacent matches to form a single bracket in the next round
-      if (matchIndex % 2 === 0 && matchIndex < rounds[roundIndex].length - 1) {
-        const spacing = getMatchSpacing(roundIndex);
-        
-        // If we're in the semifinal round connecting to the final
-        if (roundIndex === rounds.length - 3 && rounds.length > 2) {
-          const firstMatchPos = ensureConsistentVerticalAlignment(roundIndex, 0, rounds[roundIndex].length);
-          const secondMatchPos = ensureConsistentVerticalAlignment(roundIndex, 1, rounds[roundIndex].length);
+    // Safety check: make sure we have a next round and it exists
+    if (roundIndex < rounds.length - 1 && rounds[roundIndex + 1]) {
+      // Check if rounds have the same number of matches - don't show connectors in this case
+      const hasSameMatches = rounds[roundIndex].length === rounds[roundIndex + 1].length;
+      if (hasSameMatches) {
+        return 0;
+      }
+      
+      // Check if this is an advancement scenario (next round has approximately half the matches)
+      const isAdvancementRound = rounds[roundIndex + 1].length <= Math.ceil(rounds[roundIndex].length / 2);
+      
+      // Only draw connecting lines for advancement rounds
+      if (isAdvancementRound) {
+        // If we're connecting adjacent matches to form a single bracket in the next round
+        if (matchIndex % 2 === 0 && matchIndex < rounds[roundIndex].length - 1) {
+          const spacing = getMatchSpacing(roundIndex);
           
-          // Calculate the height based on match positions
-          if (rounds[roundIndex].length > 1) {
-            return Math.abs(secondMatchPos - firstMatchPos);
+          // If we're in the semifinal round connecting to the final and final has only 1 match (winner)
+          if (roundIndex === rounds.length - 3 && rounds.length > 2 
+              && rounds[roundIndex + 1].length === 1 && rounds[rounds.length - 1].length === 1) {
+            // Safety check to ensure indexes exist
+            if (rounds[roundIndex].length > 1) {
+              const firstMatchPos = ensureConsistentVerticalAlignment(roundIndex, 0, rounds[roundIndex].length);
+              const secondMatchPos = ensureConsistentVerticalAlignment(roundIndex, 1, rounds[roundIndex].length);
+              
+              // Calculate the height based on match positions
+              return Math.abs(secondMatchPos - firstMatchPos);
+            }
           }
+          
+          return spacing;
         }
-        
-        return spacing;
       }
     }
     
@@ -370,20 +415,27 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
                   // to align with the center point between the finalists in Round 3
                   let positionTop;
                   
-                  if (roundIndex === rounds.length - 1) {
-                    // For the winner card (Round 4), get position from the previous round
-                    const prevRoundMatchTop = ensureConsistentVerticalAlignment(roundIndex - 1, 0, rounds[roundIndex - 1].length);
+                  if (roundIndex === rounds.length - 1 && rounds[roundIndex].length === 1) {
+                    // For the winner card, center it relative to the first match in the previous round
+                    positionTop = ensureConsistentVerticalAlignment(0, 0, rounds[0].length);
                     
-                    // Center the winner card with the previous round match
-                    positionTop = prevRoundMatchTop;
-                    
-                    // Adjust to align with the visual center of the previous match
-                    // This offset helps account for the bracket heights
-                    const verticalAdjustment = 0;
-                    positionTop += verticalAdjustment;
+                    // If there are multiple rounds and the previous round exists
+                    if (rounds.length > 1 && rounds[roundIndex - 1] && rounds[roundIndex - 1].length > 0) {
+                      // Calculate the center point of the previous round's matches
+                      const firstMatchPos = ensureConsistentVerticalAlignment(0, 0, rounds[0].length);
+                      const lastMatchPos = ensureConsistentVerticalAlignment(0, rounds[0].length - 1, rounds[0].length);
+                      positionTop = (firstMatchPos + lastMatchPos) / 2;
+                    }
                   } else {
                     // Normal positioning for other rounds
-                    positionTop = ensureConsistentVerticalAlignment(roundIndex, matchIndex, round.length);
+                    // Check if the current round has the same number of matches as the previous round
+                    if (roundIndex > 0 && rounds[roundIndex].length === rounds[roundIndex - 1].length) {
+                      // For rounds with same number of matches, use consistent spacing from Round 1
+                      positionTop = ensureConsistentVerticalAlignment(0, matchIndex, round.length);
+                    } else {
+                      // For normal tournament progression
+                      positionTop = ensureConsistentVerticalAlignment(roundIndex, matchIndex, round.length);
+                    }
                   }
                   
                   return (
@@ -393,7 +445,7 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5, delay: matchIndex * 0.1 }}
                       className={`absolute left-0 right-0 ${
-                        roundIndex === rounds.length - 1 ? 'winner-card' : ''
+                        roundIndex === rounds.length - 1 && rounds[roundIndex].length === 1 ? 'winner-card' : ''
                       }`}
                       style={{
                         top: positionTop
@@ -403,7 +455,9 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
                       {roundIndex < rounds.length && (
                         <>
                           {/* Horizontal connector line from each match to the next round */}
-                          {roundIndex < rounds.length - 1 && (
+                          {roundIndex < rounds.length - 1 && rounds[roundIndex + 1] && 
+                            rounds[roundIndex].length !== rounds[roundIndex + 1].length &&
+                            rounds[roundIndex + 1].length <= Math.ceil(round.length / 2) && (
                             <div 
                               className="absolute -right-16 top-[60px] w-16 h-[2px] z-10"
                               style={{
@@ -414,7 +468,8 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
                           )}
                           
                           {/* Special connection for last round to Winner */}
-                          {roundIndex === rounds.length - 2 && matchIndex === 0 && rounds.length > 1 && (
+                          {roundIndex === rounds.length - 2 && matchIndex === 0 && rounds.length > 1 && 
+                            rounds[roundIndex + 1] && rounds[roundIndex + 1].length === 1 && (
                             <div className="absolute -right-[10px] z-20">
                               {/* Main horizontal connecting line */}
                               <div 
@@ -428,7 +483,10 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
                           )}
                           
                           {/* Vertical connector lines between adjacent matches */}
-                          {matchIndex % 2 === 0 && matchIndex < round.length - 1 && roundIndex < rounds.length - 1 && (
+                          {matchIndex % 2 === 0 && matchIndex < round.length - 1 && roundIndex < rounds.length - 1 && 
+                            rounds[roundIndex + 1] && 
+                            rounds[roundIndex].length !== rounds[roundIndex + 1].length &&
+                            rounds[roundIndex + 1].length <= Math.ceil(round.length / 2) && (
                             <div 
                               className="absolute -right-16 w-[2px] z-5"
                               style={{
@@ -439,7 +497,7 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
                               }}
                             >
                               {/* Horizontal connector to the next round's match */}
-                              {rounds[roundIndex + 1] && rounds[roundIndex + 1][Math.floor(matchIndex / 2)] && (
+                              {rounds[roundIndex + 1] && Math.floor(matchIndex / 2) < rounds[roundIndex + 1].length && (
                                 <div
                                   className="absolute -left-0 w-16 h-[2px] z-10"
                                   style={{
@@ -455,12 +513,12 @@ const Ladder = ({ category = 'SUPER_GAS', selectedDate }) => {
                       )}
 
                       <div className={`backdrop-blur-sm rounded-xl overflow-hidden border shadow-[0_4px_20px_rgba(6,182,212,0.15)] hover:shadow-[0_8px_30px_rgba(6,182,212,0.25)] transition-all duration-300 ${
-                        roundIndex === 3 
+                        roundIndex === rounds.length - 1 && rounds[roundIndex].length === 1
                           ? 'bg-gradient-to-br from-gray-800/90 to-gray-900/95 border-yellow-500/50 hover:shadow-[0_0_30px_rgba(234,179,8,0.3)] animate-border-pulse' 
                           : 'bg-gray-800/90 border-gray-700'
                       }`} style={{ width: '280px' }}>
-                        {/* Special rendering for Winner (Round 4) */}
-                        {roundIndex === rounds.length - 1 ? (
+                        {/* Special rendering for Winner only when there's one match */}
+                        {roundIndex === rounds.length - 1 && rounds[roundIndex].length === 1 ? (
                           <div className="flex flex-col items-center justify-center h-full py-3 px-4 relative overflow-hidden" style={{ height: '120px' }}>
                             {/* Background effects */}
                             <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/20 to-blue-900/20"></div>

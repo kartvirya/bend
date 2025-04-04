@@ -1,24 +1,70 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeftRight, Trophy, Clock, Wind, Users } from "lucide-react";
+import { ArrowLeftRight, Trophy, Clock, Wind, Users, RefreshCw } from "lucide-react";
 import { ENDPOINTS, makeApiRequest, API_CONFIG } from '../utils/api';
 import { getCarImage } from '../utils/assets';
 import { ENV } from '../utils/environment';
 
-const Pairing = ({ selectedDate, category = 'SUPER_GAS' }) => {
+const Pairing = ({ selectedDate, category = 'SUPER_GAS', godModeLevel = 0 }) => {
   const [raceData, setRaceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeIndex, setActiveIndex] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Apply God Mode scaling to specific elements
+  const getGodModeClass = () => {
+    if (godModeLevel === 0) return '';
+    return `god-mode-level-${godModeLevel}`;
+  };
+  
+  // Get font size scaling based on God Mode level
+  const getGodModeFontSize = (baseSize) => {
+    if (godModeLevel === 0) return baseSize;
+    
+    const scaleFactor = {
+      1: 1.15,
+      2: 1.3,
+      3: 1.5
+    }[godModeLevel] || 1;
+    
+    return baseSize * scaleFactor;
+  };
 
   useEffect(() => {
     console.log("Pairing component - selectedDate:", selectedDate);
     console.log("Pairing component - category:", category);
     fetchPairings();
   }, [selectedDate, category]);
+  
+  // Set up auto-refresh polling every 2 minutes
+  useEffect(() => {
+    const AUTO_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes in milliseconds
+    
+    // Create polling interval for auto-refresh
+    const intervalId = setInterval(() => {
+      console.log('Auto-refreshing pairing data...');
+      fetchPairings(true); // true means to show refreshing state instead of loading
+    }, AUTO_REFRESH_INTERVAL);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [category, selectedDate]); // Re-establish interval if category or selectedDate changes
 
-  const fetchPairings = async () => {
+  // Manual refresh handler
+  const handleManualRefresh = () => {
+    fetchPairings(true);
+  };
+
+  const fetchPairings = async (showRefreshingState = false) => {
     try {
+      if (showRefreshingState) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      
       console.log(`Fetching pairings data for category: ${category}`);
       const apiResponse = await makeApiRequest(ENDPOINTS.GET_ALL_RESULTS.PAIRING, category, selectedDate);
       
@@ -42,11 +88,13 @@ const Pairing = ({ selectedDate, category = 'SUPER_GAS' }) => {
 
       console.log(`Received ${transformedData.length} pairing records`);
       setRaceData(transformedData);
-      setLoading(false);
+      setLastRefresh(Date.now());
     } catch (err) {
       console.error('Fetch Error:', err);
       setError(err.message);
+    } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -177,18 +225,18 @@ const Pairing = ({ selectedDate, category = 'SUPER_GAS' }) => {
         
         <div className="grid grid-cols-2 gap-4 mt-4">
           <div className="flex items-center justify-center gap-2 bg-gray-800/50 rounded-md p-2 text-gray-300">
-            <Clock className="w-4 h-4" />
+            <Clock className={`w-${getGodModeFontSize(4)} h-${getGodModeFontSize(4)}`} />
             <span className="text-base">{racer.time} sec</span>
           </div>
           <div className="flex items-center justify-center gap-2 bg-gray-800/50 rounded-md p-2 text-gray-300">
-            <Wind className="w-4 h-4" />
+            <Wind className={`w-${getGodModeFontSize(4)} h-${getGodModeFontSize(4)}`} />
             <span className="text-base">{racer.speed} km/h</span>
           </div>
         </div>
       </div>
       
       <div className="mt-4 bg-gray-700/80 text-white text-sm font-bold px-4 py-2 rounded-full shadow-inner flex items-center gap-2">
-        <Trophy className="w-4 h-4" />
+        <Trophy className={`w-${getGodModeFontSize(4)} h-${getGodModeFontSize(4)}`} />
         {racer.points} pts
       </div>
     </div>
@@ -202,7 +250,7 @@ const Pairing = ({ selectedDate, category = 'SUPER_GAS' }) => {
         onClick={onSwap}
         className="bg-red-500/90 text-white rounded-full p-4 shadow-lg z-10 hover:shadow-red-500/50 hover:scale-110 transition-all duration-300"
       >
-        <ArrowLeftRight className="w-8 h-8" />
+        <ArrowLeftRight className={`w-${getGodModeFontSize(8)} h-${getGodModeFontSize(8)}`} />
       </button>
 
       <RacerCard racer={pair[1]} isActive={activeIndex === index * 2 + 1} />
@@ -218,32 +266,109 @@ const Pairing = ({ selectedDate, category = 'SUPER_GAS' }) => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden">
-      <div className="text-center mb-4 z-10">
-        <div className="text-gray-400 text-sm flex items-center justify-center gap-2">
-          <Users size={14} />
-          <span>Drag to reorder racing matchups</span>
-        </div>
-      </div>
-
-      <div className="flex-1 w-full max-w-7xl overflow-y-auto overflow-x-hidden px-4 py-2 z-10">
-        {loading ? (
-          <div className="text-white text-center">Loading pairings...</div>
-        ) : error ? (
-          <div className="text-red-500 text-center">{error}</div>
-        ) : (
-          <AnimatePresence>
-            {racerPairs.map((pair, index) => (
-              <div key={`${pair[0].number}-${pair[1]?.number || 'bye'}`}>
-                <PairCard 
-                  pair={pair}
-                  index={index}
-                  onSwap={() => handleSwap(index * 2)}
-                />
+    <div className={`min-h-screen ${getGodModeClass()}`}>
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-6 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-white">Race Pairings</h1>
+          <div className="flex items-center">
+            {lastRefresh && (
+              <div className="text-xs text-gray-400 mr-2">
+                Last updated: {new Date(lastRefresh).toLocaleTimeString()}
               </div>
-            ))}
-          </AnimatePresence>
-        )}
+            )}
+            <button 
+              onClick={handleManualRefresh} 
+              disabled={isRefreshing || loading}
+              className={`p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors ${isRefreshing ? 'animate-spin text-blue-400' : ''}`}
+            >
+              <RefreshCw size={getGodModeFontSize(16)} />
+            </button>
+          </div>
+        </div>
+        
+        <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden">
+          <div className="text-center mb-4 z-10 w-full flex justify-center items-center px-4">
+            <div className="text-gray-400 text-sm flex items-center gap-2">
+              <Users size={getGodModeFontSize(14)} />
+              <span>Drag to reorder racing matchups</span>
+            </div>
+          </div>
+
+          <div className="flex-1 w-full max-w-7xl overflow-y-auto overflow-x-hidden px-4 py-2 z-10">
+            {loading ? (
+              <div className="text-white text-center">Loading pairings...</div>
+            ) : error ? (
+              <div className="text-red-500 text-center">{error}</div>
+            ) : (
+              <AnimatePresence>
+                {racerPairs.map((pair, index) => (
+                  <div key={`${pair[0].number}-${pair[1]?.number || 'bye'}`}>
+                    <PairCard 
+                      pair={pair}
+                      index={index}
+                      onSwap={() => handleSwap(index * 2)}
+                    />
+                  </div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+
+          <style jsx>{`
+            /* Custom scaling for God Mode */
+            .god-mode-level-1 .text-xl {
+              font-size: 1.30rem !important;
+            }
+            
+            .god-mode-level-2 .text-xl {
+              font-size: 1.5rem !important;
+            }
+            
+            .god-mode-level-3 .text-xl {
+              font-size: 1.75rem !important;
+            }
+            
+            .god-mode-level-1 .text-base {
+              font-size: 1.03rem !important;
+            }
+            
+            .god-mode-level-2 .text-base {
+              font-size: 1.15rem !important;
+            }
+            
+            .god-mode-level-3 .text-base {
+              font-size: 1.3rem !important;
+            }
+            
+            .god-mode-level-1 .text-sm {
+              font-size: 0.925rem !important;
+            }
+            
+            .god-mode-level-2 .text-sm {
+              font-size: 1.05rem !important;
+            }
+            
+            .god-mode-level-3 .text-sm {
+              font-size: 1.2rem !important;
+            }
+            
+            /* Scale padding for buttons and badges */
+            .god-mode-level-1 .rounded-full,
+            .god-mode-level-1 .rounded-md {
+              padding: 0.6rem 0.8rem !important;
+            }
+            
+            .god-mode-level-2 .rounded-full,
+            .god-mode-level-2 .rounded-md {
+              padding: 0.7rem 0.9rem !important;
+            }
+            
+            .god-mode-level-3 .rounded-full,
+            .god-mode-level-3 .rounded-md {
+              padding: 0.8rem 1rem !important;
+            }
+          `}</style>
+        </div>
       </div>
     </div>
   );
